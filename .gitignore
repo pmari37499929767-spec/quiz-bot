@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment variables (ВАЖНО!)
+.env
+.env.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+```
+
+5. **Сохраните** (Ctrl+S)
+
+---
+
+### ШАГ 2: Инициализируйте Git
+
+В терминале введите:
+```
+git init
+```
+
+---
+
+### ШАГ 3: Настройте имя и email
+```
+git config --global user.name "Ваше Имя"
+git config --global user.email "ваш_email@example.com"
+```
+
+Замените на ваше настоящее имя и email!
+
+---
+
+### ШАГ 4: Добавьте файлы
+```
+git add .
+```
+
+---
+
+### ШАГ 5: Сделайте коммит
+```
+git commit -m "Первый коммит: приветствие и запрос имени работают"
+```
+
+---
+
+### ШАГ 6: Покажите ссылку на ваш репозиторий
+
+**Какая ссылка на ваш репозиторий на GitHub?**
+
+Формат:
+```
+https://github.com/ВашеИмя/название-репозитория
