@@ -1,10 +1,13 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 import os
 from dotenv import load_dotenv
+from aiogram.types import BotCommand
+
 
 # Импортируем наш обработчик старта
 from handlers import start
@@ -33,7 +36,7 @@ async def main():
     )
     
     # Создаём диспетчер (обработчик сообщений)
-    dp = Dispatcher()
+    dp = Dispatcher(storage=MemoryStorage())
     
     # Подключаем обработчики из handlers/start.py
     dp.include_router(start.router)
