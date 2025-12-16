@@ -850,7 +850,7 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     await state.set_state(QuizStates.show_result)
 
     # Вычисляем финальный результат с помощью scoring модуля
-    from scoring import AnswersState, compute_result, build_final_message
+    from scoring import AnswersState, compute_result, build_final_message, get_result_buttons
     from config import DEFAULT_TEMPLATE
 
     # Получаем все данные
@@ -872,8 +872,9 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     # Вычисляем результат
     result = compute_result(answers_state)
 
-    # Строим финальное сообщение
+    # Строим финальное сообщение и кнопки
     final_message = build_final_message(result, DEFAULT_TEMPLATE)
+    result_buttons = get_result_buttons(result, DEFAULT_TEMPLATE)
 
     await callback.message.answer(
         "✅ Отлично! Диагностика завершена.\n\n"
@@ -886,8 +887,78 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     import asyncio
     await asyncio.sleep(2)
 
-    # Отправляем финальный результат
+    # Создаем клавиатуру с кнопками
+    keyboard = None
+    if result_buttons:
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[[btn] for btn in result_buttons]
+        )
+
+    # Отправляем финальный результат с кнопками
     await callback.message.answer(
         final_message,
+        reply_markup=keyboard,
+        parse_mode='HTML'
+    )
+
+
+# ========================================
+# ОБРАБОТЧИКИ КНОПОК РЕЗУЛЬТАТА
+# ========================================
+
+@router.callback_query(F.data == "to_consult")
+async def handle_to_consult(callback: CallbackQuery, state: FSMContext):
+    """Обработка кнопки 'Хочу разбор с {ЭКСПЕРТ}'"""
+    await callback.answer()
+
+    from config import DEFAULT_TEMPLATE
+
+    consult_message = (
+        f"<b>Тогда следующий шаг простой:</b>\n\n"
+        f"<b>{DEFAULT_TEMPLATE.expert_name}</b> делает для таких, как ты, {DEFAULT_TEMPLATE.service_format} — "
+        f"за одну встречу вы разбираете твою точку А, узкое горлышко и реальные шаги на 2026 год.\n\n"
+        f"<b>Нажми на кнопку ниже, чтобы:</b>\n"
+        f"— получить условия и стоимость,\n"
+        f"— задать вопрос,\n"
+        f"— или сразу записаться."
+    )
+
+    # Создаем кнопку для связи с экспертом
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text=f"Написать {DEFAULT_TEMPLATE.expert_name_dat}",
+                url=f"https://t.me/{DEFAULT_TEMPLATE.expert_username}"
+            )]
+        ]
+    )
+
+    await callback.message.answer(
+        consult_message,
+        reply_markup=keyboard,
+        parse_mode='HTML'
+    )
+
+
+@router.callback_query(F.data == "to_self")
+async def handle_to_self(callback: CallbackQuery, state: FSMContext):
+    """Обработка кнопки 'Попробую сам(а) по шагам'"""
+    await callback.answer()
+
+    from config import DEFAULT_TEMPLATE
+
+    self_message = (
+        "<b>Круто, что ты готов(а) пробовать сам(а).</b>\n\n"
+        "Сохрани эти шаги и попробуй хотя бы 7–10 дней делать хоть что-то одно из списка.\n\n"
+        f"Если поймёшь, что буксуешь, смело возвращайся к "
+        f"<a href='https://t.me/{DEFAULT_TEMPLATE.expert_username}'>{DEFAULT_TEMPLATE.expert_name_dat}</a> — "
+        f"{DEFAULT_TEMPLATE.pronoun_nom} не будет тебя отчитывать, "
+        "а поможет спокойно довести эту историю до роста дохода."
+    )
+
+    await callback.message.answer(
+        self_message,
         parse_mode='HTML'
     )

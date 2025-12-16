@@ -12,8 +12,9 @@ from config import (
     TWIST_THRESHOLD,
     TemplateVars,
     DEFAULT_TEMPLATE,
-    build_twist_message,
-    build_confirmation_message,
+    COMMON_COMPLAINTS,
+    RESULT_SERIES_MAP,
+    ResultSeries,
 )
 
 
@@ -137,12 +138,58 @@ def build_final_message(
     """
     vars = template_vars or DEFAULT_TEMPLATE
 
-    bottleneck_name = ZONE_LABEL[result.bottleneck]
-    perceived_name = ZONE_LABEL[result.perceived] if result.perceived else None
+    # Получаем серию результата для зоны
+    series = RESULT_SERIES_MAP.get(result.bottleneck)
 
-    # ТВИСТ (когда perceived != bottleneck)
-    if result.twist and perceived_name:
-        return build_twist_message(bottleneck_name, perceived_name, vars)
+    if not series:
+        return f"⚠️ Финальный текст для зоны '{result.bottleneck}' еще не прописан"
 
-    # ПОДТВЕРЖДЕНИЕ (когда perceived == bottleneck или нет perceived)
-    return build_confirmation_message(bottleneck_name, vars)
+    # Выбираем текст: TWIST или CONFIRMATION
+    if result.twist and result.perceived:
+        message_template = series.message_twist
+        # Для TWIST используем perceived зону как "частое жалобное"
+        complaint = COMMON_COMPLAINTS.get(result.perceived, "непонятная проблема")
+    else:
+        message_template = series.message_confirmation
+        complaint = ""  # Не нужно для confirmation
+
+    # Подставляем переменные
+    message = message_template.replace("{ЭКСПЕРТ}", vars.expert_name)
+    message = message.replace("{ПРОДУКТ}", vars.product)
+    if "{ЧАСТОЕ_ЖАЛОБНОЕ}" in message:
+        message = message.replace("{ЧАСТОЕ_ЖАЛОБНОЕ}", complaint)
+
+    return message
+
+
+def get_result_buttons(
+    result: DiagnosticResult,
+    template_vars: Optional[TemplateVars] = None
+) -> list:
+    """
+    Получить кнопки для результата
+
+    Args:
+        result: Результат диагностики
+        template_vars: Переменные для шаблонизации
+
+    Returns:
+        Список кнопок с подставленными переменными
+    """
+    from aiogram.types import InlineKeyboardButton
+
+    vars = template_vars or DEFAULT_TEMPLATE
+
+    # Получаем серию результата для зоны
+    series = RESULT_SERIES_MAP.get(result.bottleneck)
+
+    if not series:
+        return []
+
+    # Создаем кнопки с подставленными переменными
+    buttons = []
+    for btn in series.buttons:
+        text = btn.text.replace("{ЭКСПЕРТ}", vars.expert_name)
+        buttons.append(InlineKeyboardButton(text=text, callback_data=btn.id))
+
+    return buttons
