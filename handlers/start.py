@@ -371,7 +371,77 @@ async def handle_question_3(callback: CallbackQuery, state: FSMContext):
         system_pain=0
     )
 
-    # Переходим к четвёртому вопросу
+    # Переходим к вопросу perceived (что человек ДУМАЕТ, что мешает)
+    await state.set_state(QuizStates.question_perceived)
+
+    # Вопрос PERCEIVED: Что человек ДУМАЕТ, что мешает (для твиста)
+    keyboard_perceived = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📦 Слабое предложение / не понимаю, что продавать",
+                callback_data="perceived_product"
+            )],
+            [InlineKeyboardButton(
+                text="👥 Мало новых людей, слабый трафик",
+                callback_data="perceived_traffic"
+            )],
+            [InlineKeyboardButton(
+                text="📝 Не доверяют / мало прогрева к продукту",
+                callback_data="perceived_content"
+            )],
+            [InlineKeyboardButton(
+                text="💰 Трудно продавать / стыдно / не умею",
+                callback_data="perceived_sales"
+            )],
+            [InlineKeyboardButton(
+                text="⚙️ Нет времени / сил / структуры",
+                callback_data="perceived_system"
+            )]
+        ]
+    )
+
+    perceived_text = (
+        "✅ Супер! Твоя цель зафиксирована!\n\n"
+        "🤔 <b>Давай честно:</b>\n\n"
+        "Как тебе кажется, что <b>больше всего</b> мешает росту прямо сейчас?\n\n"
+        "Выбери то, что первым приходит в голову, когда думаешь: "
+        "«Вот если бы ЭТО решить — сразу полегчало бы»."
+    )
+
+    await callback.message.answer(
+        perceived_text,
+        reply_markup=keyboard_perceived,
+        parse_mode='HTML'
+    )
+
+
+@router.callback_query(F.data.in_([
+    "perceived_product",
+    "perceived_traffic",
+    "perceived_content",
+    "perceived_sales",
+    "perceived_system"
+]))
+async def handle_perceived(callback: CallbackQuery, state: FSMContext):
+    """Обработка ответа на perceived вопрос (что человек ДУМАЕТ, что мешает)"""
+
+    await callback.answer()
+
+    # Маппинг callback_data -> зона
+    perceived_zone_map = {
+        "perceived_product": "product",
+        "perceived_traffic": "traffic",
+        "perceived_content": "content",
+        "perceived_sales": "sales",
+        "perceived_system": "system",
+    }
+
+    perceived_zone = perceived_zone_map[callback.data]
+
+    # Сохраняем perceived зону
+    await state.update_data(perceived_zone=perceived_zone)
+
+    # Переходим к диагностическим вопросам (вопрос 4)
     await state.set_state(QuizStates.question_4)
 
     # Вопрос 4: Диагностика - Продукт
@@ -397,8 +467,8 @@ async def handle_question_3(callback: CallbackQuery, state: FSMContext):
         "🔍 <b>Диагностика: 5 зон, где «течёт» результат</b>\n\n"
         "Теперь проверим 5 ключевых точек, где чаще всего теряются деньги.\n"
         "Я задам по одному вопросу на каждую зону — отвечай честно.\n\n"
-        "📦 <b>Блок 1. Продукт/предложение</b>\n\n"
-        "<b>Вопрос 4:</b> Начнём с самого очевидного вопроса: что ты продаёшь?\n\n"
+        "📦 <b>Продукт/предложение</b>\n\n"
+        "Начнём с самого очевидного вопроса: что ты продаёшь?\n\n"
         "Представь, что я твой идеальный клиент.\n"
         "Можешь ли ты за 1–2 предложения объяснить, что именно я у тебя могу купить? "
         "Чем ты мне можешь помочь?"
@@ -429,6 +499,19 @@ async def handle_question_4(callback: CallbackQuery, state: FSMContext):
     }
 
     product_pain += pain_points[callback.data]
+
+    # Жалобность варианта (для fallback perceived)
+    complaint_levels = {
+        "q4_clear": 0,
+        "q4_medium": 1,
+        "q4_chaos": 2
+    }
+
+    # Обновляем complaint_best если нужно
+    complaint = complaint_levels[callback.data]
+    complaint_best = data.get('complaint_best')
+    if not complaint_best or complaint > complaint_best[1]:
+        await state.update_data(complaint_best=("product", complaint))
 
     # Сохраняем обновлённый счётчик и ответ
     answer_text = {
@@ -465,9 +548,9 @@ async def handle_question_4(callback: CallbackQuery, state: FSMContext):
 
     question_5_text = (
         "✅ Принято!\n\n"
-        "👥 <b>Блок 2. Поток людей (трафик)</b>\n\n"
+        "👥 <b>Поток людей (трафик)</b>\n\n"
         "Хороший продукт без людей — это как концерт в пустом зале.\n\n"
-        "<b>Вопрос 5:</b> Насколько стабильно к тебе приходят новые люди?"
+        "Насколько стабильно к тебе приходят новые люди?"
     )
 
     await callback.message.answer(
@@ -495,6 +578,19 @@ async def handle_question_5(callback: CallbackQuery, state: FSMContext):
     }
 
     traffic_pain += pain_points[callback.data]
+
+    # Жалобность варианта (для fallback perceived)
+    complaint_levels = {
+        "q5_stable": 0,
+        "q5_unstable": 1,
+        "q5_stagnant": 2
+    }
+
+    # Обновляем complaint_best если нужно
+    complaint = complaint_levels[callback.data]
+    complaint_best = data.get('complaint_best')
+    if not complaint_best or complaint > complaint_best[1]:
+        await state.update_data(complaint_best=("traffic", complaint))
 
     # Сохраняем обновлённый счётчик и ответ
     answer_text = {
@@ -535,9 +631,9 @@ async def handle_question_5(callback: CallbackQuery, state: FSMContext):
 
     question_6_text = (
         "✅ Зафиксировали!\n\n"
-        "📝 <b>Блок 3. Контент / доверие</b>\n\n"
+        "📝 <b>Контент / доверие</b>\n\n"
         "Люди покупают не только продукт, но и историю, в которую ты их зовёшь.\n\n"
-        f"<b>Вопрос 6:</b> Как ты ведёшь контент в своих основных площадках?"
+        "Как ты ведёшь контент в своих основных площадках?"
     )
 
     await callback.message.answer(
@@ -565,6 +661,19 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
     }
 
     content_pain += pain_points[callback.data]
+
+    # Жалобность варианта (для fallback perceived)
+    complaint_levels = {
+        "q6_regular": 0,
+        "q6_irregular": 2,
+        "q6_no_funnel": 2
+    }
+
+    # Обновляем complaint_best если нужно
+    complaint = complaint_levels[callback.data]
+    complaint_best = data.get('complaint_best')
+    if not complaint_best or complaint > complaint_best[1]:
+        await state.update_data(complaint_best=("content", complaint))
 
     # Сохраняем обновлённый счётчик и ответ
     answer_text = {
@@ -601,9 +710,9 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
 
     question_7_text = (
         "✅ Понял!\n\n"
-        "💰 <b>Блок 4. Продажи и офферы</b>\n\n"
+        "💰 <b>Продажи и офферы</b>\n\n"
         "Теперь про самое «любимое» — продажи.\n\n"
-        "<b>Вопрос 7:</b> Как часто ты прямо и спокойно говоришь людям:\n"
+        "Как часто ты прямо и спокойно говоришь людям:\n"
         "«Вот мой формат работы, вот стоимость, вот как записаться»?"
     )
 
@@ -632,6 +741,19 @@ async def handle_question_7(callback: CallbackQuery, state: FSMContext):
     }
 
     sales_pain += pain_points[callback.data]
+
+    # Жалобность варианта (для fallback perceived)
+    complaint_levels = {
+        "q7_regular": 0,
+        "q7_sometimes": 1,
+        "q7_ashamed": 3        # САМАЯ ЖАЛОБНАЯ - стыдно продавать
+    }
+
+    # Обновляем complaint_best если нужно
+    complaint = complaint_levels[callback.data]
+    complaint_best = data.get('complaint_best')
+    if not complaint_best or complaint > complaint_best[1]:
+        await state.update_data(complaint_best=("sales", complaint))
 
     # Сохраняем обновлённый счётчик и ответ
     answer_text = {
@@ -668,9 +790,9 @@ async def handle_question_7(callback: CallbackQuery, state: FSMContext):
 
     question_8_text = (
         "✅ Зафиксировал!\n\n"
-        "⚙️ <b>Блок 5. Система / ресурс</b>\n\n"
+        "⚙️ <b>Система / ресурс</b>\n\n"
         "И ещё вопрос не про цифры, а про выживание.\n\n"
-        "<b>Вопрос 8:</b> Если к тебе завтра придут 20 клиентов одновременно, что произойдёт?"
+        "Если к тебе завтра придут 20 клиентов одновременно, что произойдёт?"
     )
 
     await callback.message.answer(
@@ -699,6 +821,19 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
 
     system_pain += pain_points[callback.data]
 
+    # Жалобность варианта (для fallback perceived)
+    complaint_levels = {
+        "q8_scale": 0,
+        "q8_struggle": 1,
+        "q8_burnout": 2
+    }
+
+    # Обновляем complaint_best если нужно
+    complaint = complaint_levels[callback.data]
+    complaint_best = data.get('complaint_best')
+    if not complaint_best or complaint > complaint_best[1]:
+        await state.update_data(complaint_best=("system", complaint))
+
     # Сохраняем обновлённый счётчик и ответ
     answer_text = {
         "q8_scale": "Распланирую и справлюсь",
@@ -714,8 +849,45 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     # Все вопросы пройдены - переходим к результатам
     await state.set_state(QuizStates.show_result)
 
+    # Вычисляем финальный результат с помощью scoring модуля
+    from scoring import AnswersState, compute_result, build_final_message
+    from config import DEFAULT_TEMPLATE
+
+    # Получаем все данные
+    data = await state.get_data()
+
+    # Формируем AnswersState
+    answers_state = AnswersState(
+        scores={
+            "product": data.get('product_pain', 0),
+            "traffic": data.get('traffic_pain', 0),
+            "content": data.get('content_pain', 0),
+            "sales": data.get('sales_pain', 0),
+            "system": data.get('system_pain', 0),
+        },
+        perceived_zone=data.get('perceived_zone'),
+        complaint_best=data.get('complaint_best')
+    )
+
+    # Вычисляем результат
+    result = compute_result(answers_state)
+
+    # Строим финальное сообщение
+    final_message = build_final_message(result, DEFAULT_TEMPLATE)
+
     await callback.message.answer(
         "✅ Отлично! Диагностика завершена.\n\n"
-        "Сейчас проанализирую твои ответы и покажу результат...",
+        "По твоим ответам я вижу одну интересную штуку.\n\n"
+        "Сейчас проанализирую твои результаты и покажу результат...",
+        parse_mode='HTML'
+    )
+
+    # Короткая пауза для эффекта
+    import asyncio
+    await asyncio.sleep(2)
+
+    # Отправляем финальный результат
+    await callback.message.answer(
+        final_message,
         parse_mode='HTML'
     )
