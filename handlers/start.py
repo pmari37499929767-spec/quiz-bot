@@ -657,7 +657,7 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
     pain_points = {
         "q6_regular": 0,       # Регулярный контент с логикой - нет боли
         "q6_irregular": 2,     # Нерегулярно, как попало - высокая боль
-        "q6_no_funnel": 2      # Нет логики прогрева к продукту - высокая боль
+        "q6_no_funnel": 4      # Нет логики прогрева к продукту - высокая боль
     }
 
     content_pain += pain_points[callback.data]
@@ -666,7 +666,7 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
     complaint_levels = {
         "q6_regular": 0,
         "q6_irregular": 2,
-        "q6_no_funnel": 2
+        "q6_no_funnel": 4
     }
 
     # Обновляем complaint_best если нужно
@@ -816,7 +816,7 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     pain_points = {
         "q8_scale": 0,        # Готов масштабироваться - нет боли
         "q8_struggle": 1,     # Напрячётся, но справится - средняя боль
-        "q8_burnout": 2       # Сгорит и запутается - высокая боль (нет масштабируемости)
+        "q8_burnout": 3       # Сгорит и запутается - высокая боль (нет масштабируемости)
     }
 
     system_pain += pain_points[callback.data]
@@ -825,7 +825,7 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     complaint_levels = {
         "q8_scale": 0,
         "q8_struggle": 1,
-        "q8_burnout": 2
+        "q8_burnout": 3
     }
 
     # Обновляем complaint_best если нужно
