@@ -15,9 +15,9 @@ Zone = str  # "product" | "traffic" | "content" | "sales" | "system"
 ZONE_MAX: Dict[Zone, int] = {
     "product": 2,
     "traffic": 2,
-    "content": 2,
-    "sales": 3,      # У продаж может быть "жирная боль" = 3
-    "system": 2,
+    "content": 4,
+    "sales": 3,
+    "system": 3,
 }
 
 # Приоритет при равенстве баллов (тай-брейк)
