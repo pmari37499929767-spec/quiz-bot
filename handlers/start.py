@@ -7,6 +7,16 @@ from .states import QuizStates
 router = Router()
 
 
+@router.message(F.text == "/myid")
+async def cmd_myid(message: Message):
+    """Показать chat_id пользователя"""
+    await message.answer(
+        f"Ваш chat_id: <code>{message.from_user.id}</code>\n\n"
+        "Скопируйте это число и отправьте разработчику.",
+        parse_mode='HTML'
+    )
+
+
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     """Обработчик команды /start"""
@@ -136,16 +146,23 @@ async def process_niche_choice(callback: CallbackQuery, state: FSMContext):
         )
         return
     
-    # Сохраняем нишу
-    niches = {
+    # Сохраняем нишу (именительный падеж для заявки, предложный для вопросов)
+    niches_nominative = {
+        "niche_infoproducts": "инфопродукты",
+        "niche_consulting": "консалтинг",
+        "niche_sales": "продажи",
+        "niche_business": "бизнес"
+    }
+    niches_prepositional = {
         "niche_infoproducts": "инфопродуктах",
         "niche_consulting": "консалтинге",
         "niche_sales": "продажах",
         "niche_business": "бизнесе"
     }
-    
-    niche = niches.get(callback.data, "бизнесе")
-    await state.update_data(niche=niche)
+
+    niche = niches_nominative.get(callback.data, "бизнес")
+    niche_prep = niches_prepositional.get(callback.data, "бизнесе")
+    await state.update_data(niche=niche, niche_prep=niche_prep)
     
     # Переходим к первому вопросу
     await state.set_state(QuizStates.question_1)
@@ -176,7 +193,7 @@ async def process_niche_choice(callback: CallbackQuery, state: FSMContext):
         f"Отлично, <b>{name}</b>!\n\n"
         "Сейчас я задам тебе несколько вопросов. Это займёт всего 2 минуты.\n\n"
         "🎯 <b>Начнём с честной точки А.</b> Без чувства вины, просто факт.\n\n"
-        f"<b>Вопрос 1:</b> Как ты оцениваешь свой 2025 по деньгам/результатам в <b>{niche}</b>?"
+        f"<b>Вопрос 1:</b> Как ты оцениваешь свой 2025 по деньгам/результатам в <b>{niche_prep}</b>?"
     )
     
     await callback.message.answer(question_text, reply_markup=keyboard, parse_mode='HTML')
@@ -186,17 +203,18 @@ async def process_niche_choice(callback: CallbackQuery, state: FSMContext):
 async def process_custom_niche(message: Message, state: FSMContext):
     """Обработка кастомной ниши (когда пользователь сам пишет)"""
     
-    niche = message.text.strip().lower()
-    
-    if not niche or len(niche) < 3:
+    niche_raw = message.text.strip()
+
+    if not niche_raw or len(niche_raw) < 3:
         await message.answer("Пожалуйста, напиши сферу деятельности (минимум 3 символа):")
         return
-    
-    # Добавляем предлог, если нужно
-    if not niche.startswith(('в ', 'в')):
-        niche = f"в сфере {niche}"
-    
-    await state.update_data(niche=niche)
+
+    # Сохраняем именительный падеж для заявки
+    niche = niche_raw
+    # Для вопросов добавляем предлог
+    niche_prep = f"сфере «{niche_raw}»"
+
+    await state.update_data(niche=niche, niche_prep=niche_prep)
     
     # Переходим к первому вопросу
     await state.set_state(QuizStates.question_1)
@@ -227,9 +245,9 @@ async def process_custom_niche(message: Message, state: FSMContext):
         f"Отлично, <b>{name}</b>!\n\n"
         "Сейчас я задам тебе несколько вопросов. Это займёт всего 2 минуты.\n\n"
         "🎯 <b>Начнём с честной точки А.</b> Без чувства вины, просто факт.\n\n"
-        f"<b>Вопрос 1:</b> Как ты оцениваешь свой 2025 по деньгам/результатам <b>{niche}</b>?"
+        f"<b>Вопрос 1:</b> Как ты оцениваешь свой 2025 по деньгам/результатам в <b>{niche_prep}</b>?"
     )
-    
+
     await message.answer(question_text, reply_markup=keyboard, parse_mode='HTML')
 
 
@@ -913,24 +931,22 @@ async def handle_to_consult(callback: CallbackQuery, state: FSMContext):
 
     from config import DEFAULT_TEMPLATE
 
+    # Блок 1: Информация о разборе
     consult_message = (
-        f"<b>Тогда следующий шаг простой:</b>\n\n"
-        f"<b>{DEFAULT_TEMPLATE.expert_name}</b> делает для таких, как ты, {DEFAULT_TEMPLATE.service_format} — "
-        f"за одну встречу вы разбираете твою точку А, узкое горлышко и реальные шаги на 2026 год.\n\n"
-        f"<b>Нажми на кнопку ниже, чтобы:</b>\n"
-        f"— получить условия и стоимость,\n"
-        f"— задать вопрос,\n"
-        f"— или сразу записаться."
+        f"<b>Разбор с {DEFAULT_TEMPLATE.expert_name}</b> — 60 минут в Телемост.\n\n"
+        f"За одну встречу:\n"
+        f"— находим узкое горлышко (что реально тормозит заявки/доход)\n"
+        f"— собираем план на 14 дней\n"
+        f"— даю 2 сценария квиза под вашу нишу (короткий и «мини-сериал»)\n\n"
+        f"<b>Стоимость: 6 900 ₽</b>"
     )
 
-    # Создаем кнопку для связи с экспертом
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+    # Блок 2: Кнопка записи
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text=f"Написать {DEFAULT_TEMPLATE.expert_name_dat}",
-                url=f"https://t.me/{DEFAULT_TEMPLATE.expert_username}"
+                text="📝 Записаться на разбор",
+                callback_data="consult_signup"
             )]
         ]
     )
@@ -940,6 +956,200 @@ async def handle_to_consult(callback: CallbackQuery, state: FSMContext):
         reply_markup=keyboard,
         parse_mode='HTML'
     )
+
+
+@router.callback_query(F.data == "consult_signup")
+async def handle_consult_signup(callback: CallbackQuery, state: FSMContext):
+    """Обработка кнопки 'Записаться на разбор' - микровопрос перед личкой"""
+    await callback.answer()
+
+    from config import DEFAULT_TEMPLATE
+
+    # Блок 3: Микровопрос перед переходом в личку
+    micro_question = (
+        "Чтобы я пришла подготовленной, ответьте в 2 строках:\n\n"
+        "1️⃣ <b>Ниша и что продаёте</b>\n"
+        "2️⃣ <b>Где сейчас основной поток:</b> ВК / ТГ / сайт\n\n"
+        "Напишите ответ прямо сюда 👇"
+    )
+
+    await callback.message.answer(
+        micro_question,
+        parse_mode='HTML'
+    )
+
+    # Устанавливаем состояние ожидания ответа на микровопрос
+    await state.set_state(QuizStates.waiting_for_consult_info)
+
+
+@router.message(QuizStates.waiting_for_consult_info)
+async def handle_consult_info(message: Message, state: FSMContext):
+    """Обработка ответа на микровопрос перед консультацией"""
+
+    from config import DEFAULT_TEMPLATE
+
+    # Сохраняем информацию
+    await state.update_data(consult_info=message.text)
+
+    # Финальное сообщение
+    final_message = (
+        "Спасибо! Записала 🙌\n\n"
+        "<b>Разбор</b> — 60 минут в Телемост, стоимость <b>6 900 ₽</b>.\n\n"
+        "Выберите удобное время для встречи 👇"
+    )
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📋 Шаблон 1 (быстро)",
+                callback_data="template_1"
+            )],
+            [InlineKeyboardButton(
+                text="🌙 Шаблон 2 (вечер/выходные)",
+                callback_data="template_2"
+            )],
+            [InlineKeyboardButton(
+                text="⚡ Шаблон 3 (срочно)",
+                callback_data="template_3"
+            )]
+        ]
+    )
+
+    await message.answer(
+        final_message,
+        reply_markup=keyboard,
+        parse_mode='HTML'
+    )
+
+    # Переходим в состояние выбора шаблона
+    await state.set_state(QuizStates.choosing_template)
+
+
+@router.callback_query(F.data.in_(["template_1", "template_2", "template_3"]))
+async def handle_template_choice(callback: CallbackQuery, state: FSMContext):
+    """Показ текста заявки для подтверждения"""
+    await callback.answer()
+
+    from config import DEFAULT_TEMPLATE
+
+    # Шаблоны с "Оплата — переводом." во всех
+    templates = {
+        "template_1": f"{DEFAULT_TEMPLATE.expert_name}, хочу разбор. Удобно: завтра 12:00–14:00 или 18:00–20:00 (МСК). Телемост. Оплата — переводом.",
+        "template_2": f"{DEFAULT_TEMPLATE.expert_name}, хочу разбор. Могу: будни после 19:00 или выходные с 12:00 до 16:00 (МСК). Телемост. Оплата — переводом.",
+        "template_3": f"{DEFAULT_TEMPLATE.expert_name}, хочу разбор как можно быстрее. Сегодня могу до 22:00 (МСК) / завтра в любое время. Телемост. Оплата — переводом."
+    }
+
+    template_text = templates[callback.data]
+
+    # Сохраняем выбранный шаблон
+    await state.update_data(selected_template=template_text)
+
+    # Показываем текст заявки для проверки
+    preview_message = (
+        "📝 <b>Ваша заявка:</b>\n\n"
+        f"<i>{template_text}</i>\n\n"
+        "Проверьте и нажмите кнопку для отправки 👇"
+    )
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="✅ Подтвердить и отправить",
+                callback_data="confirm_request"
+            )],
+            [InlineKeyboardButton(
+                text="◀️ Выбрать другое время",
+                callback_data="back_to_templates"
+            )]
+        ]
+    )
+
+    await callback.message.answer(
+        preview_message,
+        reply_markup=keyboard,
+        parse_mode='HTML'
+    )
+
+
+@router.callback_query(F.data == "back_to_templates")
+async def handle_back_to_templates(callback: CallbackQuery, state: FSMContext):
+    """Возврат к выбору шаблонов"""
+    await callback.answer()
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📋 Шаблон 1 (быстро)",
+                callback_data="template_1"
+            )],
+            [InlineKeyboardButton(
+                text="🌙 Шаблон 2 (вечер/выходные)",
+                callback_data="template_2"
+            )],
+            [InlineKeyboardButton(
+                text="⚡ Шаблон 3 (срочно)",
+                callback_data="template_3"
+            )]
+        ]
+    )
+
+    await callback.message.answer(
+        "Выберите удобное время для встречи 👇",
+        reply_markup=keyboard,
+        parse_mode='HTML'
+    )
+
+
+@router.callback_query(F.data == "confirm_request")
+async def handle_confirm_request(callback: CallbackQuery, state: FSMContext):
+    """Подтверждение и отправка заявки администратору"""
+    await callback.answer()
+
+    import os
+    from config import DEFAULT_TEMPLATE
+
+    # Получаем данные пользователя
+    data = await state.get_data()
+    user_name = data.get('name', 'Не указано')
+    user_niche = data.get('niche', 'Не указано')
+    consult_info = data.get('consult_info', 'Не указано')
+    template_text = data.get('selected_template', 'Не указано')
+
+    # Информация о пользователе Telegram
+    user = callback.from_user
+    user_link = f"@{user.username}" if user.username else f"ID: {user.id}"
+
+    # Формируем заявку для администратора
+    admin_message = (
+        "🔔 <b>НОВАЯ ЗАЯВКА НА РАЗБОР!</b>\n\n"
+        f"👤 <b>Клиент:</b> {user_name}\n"
+        f"📱 <b>Telegram:</b> {user_link}\n"
+        f"💼 <b>Ниша:</b> {user_niche}\n\n"
+        f"📝 <b>Информация от клиента:</b>\n{consult_info}\n\n"
+        f"⏰ <b>Сообщение:</b>\n{template_text}"
+    )
+
+    # Отправляем заявку администратору
+    admin_chat_id = os.getenv('ADMIN_CHAT_ID')
+    if admin_chat_id:
+        try:
+            await callback.bot.send_message(
+                chat_id=int(admin_chat_id),
+                text=admin_message,
+                parse_mode='HTML'
+            )
+        except Exception as e:
+            print(f"Ошибка отправки админу: {e}")
+
+    # Показываем благодарность пользователю
+    await callback.message.answer(
+        "🙌 <b>Спасибо большое!</b>\n\n"
+        "Ваша заявка отправлена. Вам ответят в ближайшее время.",
+        parse_mode='HTML'
+    )
+
+    # Очищаем состояние
+    await state.clear()
 
 
 @router.callback_query(F.data == "to_self")

@@ -22,3 +22,9 @@ class QuizStates(StatesGroup):
     question_8 = State()
 
     show_result = State()
+
+    # Состояние ожидания информации для консультации
+    waiting_for_consult_info = State()
+
+    # Состояние выбора шаблона сообщения
+    choosing_template = State()
