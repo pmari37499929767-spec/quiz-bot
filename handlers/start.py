@@ -958,6 +958,39 @@ async def handle_to_consult(callback: CallbackQuery, state: FSMContext):
     )
 
 
+@router.callback_query(F.data == "paid_diagnostic")
+async def handle_paid_diagnostic(callback: CallbackQuery, state: FSMContext):
+    """Обработка кнопки 'Полная диагностика + сценарии — 6 900 ₽'"""
+    await callback.answer()
+
+    from config import DEFAULT_TEMPLATE
+
+    # Информация о платной диагностике
+    diagnostic_message = (
+        f"<b>Полная диагностика с {DEFAULT_TEMPLATE.expert_name}</b> — 60 минут в Телемост.\n\n"
+        f"За одну встречу:\n"
+        f"— находим узкое горлышко (что реально тормозит заявки/доход)\n"
+        f"— собираем план на 14 дней\n"
+        f"— даю 2 сценария квиза под вашу нишу (короткий и «мини-сериал»)\n\n"
+        f"<b>Стоимость: 6 900 ₽</b>"
+    )
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📝 Записаться на диагностику",
+                callback_data="consult_signup"
+            )]
+        ]
+    )
+
+    await callback.message.answer(
+        diagnostic_message,
+        reply_markup=keyboard,
+        parse_mode='HTML'
+    )
+
+
 @router.callback_query(F.data == "consult_signup")
 async def handle_consult_signup(callback: CallbackQuery, state: FSMContext):
     """Обработка кнопки 'Записаться на разбор' - микровопрос перед личкой"""

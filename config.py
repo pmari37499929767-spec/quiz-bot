@@ -95,6 +95,7 @@ class ResultButton:
     """Кнопка для результата"""
     id: str          # callback_data для кнопки
     text: str        # Текст кнопки (может содержать {ЭКСПЕРТ})
+    url: str = None  # URL для внешней ссылки (если указан, кнопка будет ссылкой)
 
 
 @dataclass
@@ -162,8 +163,8 @@ RESULT_PRODUCT = ResultSeries(
     ),
 
     buttons=[
-        ResultButton(id="to_consult", text="Хочу разбор с {ЭКСПЕРТ}"),
-        ResultButton(id="to_self", text="Попробую сам(а) по шагам"),
+        ResultButton(id="free_express", text="🎁 Экспресс-разбор БЕСПЛАТНО", url="https://t.me/{EXPERT_USERNAME}"),
+        ResultButton(id="paid_diagnostic", text="💎 Полная диагностика + сценарии — 6 900 ₽"),
     ]
 )
 
@@ -223,8 +224,8 @@ RESULT_TRAFFIC = ResultSeries(
     ),
 
     buttons=[
-        ResultButton(id="to_consult", text="Хочу разбор с {ЭКСПЕРТ}"),
-        ResultButton(id="to_self", text="Попробую сам(а) по шагам"),
+        ResultButton(id="free_express", text="🎁 Экспресс-разбор БЕСПЛАТНО", url="https://t.me/{EXPERT_USERNAME}"),
+        ResultButton(id="paid_diagnostic", text="💎 Полная диагностика + сценарии — 6 900 ₽"),
     ]
 )
 
@@ -286,8 +287,8 @@ RESULT_CONTENT = ResultSeries(
     ),
 
     buttons=[
-        ResultButton(id="to_consult", text="Хочу разбор с {ЭКСПЕРТ}"),
-        ResultButton(id="to_self", text="Попробую сам(а) по шагам"),
+        ResultButton(id="free_express", text="🎁 Экспресс-разбор БЕСПЛАТНО", url="https://t.me/{EXPERT_USERNAME}"),
+        ResultButton(id="paid_diagnostic", text="💎 Полная диагностика + сценарии — 6 900 ₽"),
     ]
 )
 
@@ -341,8 +342,8 @@ RESULT_SALES = ResultSeries(
     ),
 
     buttons=[
-        ResultButton(id="to_consult", text="Хочу разбор с {ЭКСПЕРТ}"),
-        ResultButton(id="to_self", text="Попробую сам(а) по шагам"),
+        ResultButton(id="free_express", text="🎁 Экспресс-разбор БЕСПЛАТНО", url="https://t.me/{EXPERT_USERNAME}"),
+        ResultButton(id="paid_diagnostic", text="💎 Полная диагностика + сценарии — 6 900 ₽"),
     ]
 )
 
@@ -402,8 +403,8 @@ RESULT_SYSTEM = ResultSeries(
     ),
 
     buttons=[
-        ResultButton(id="to_consult", text="Хочу разбор с {ЭКСПЕРТ}"),
-        ResultButton(id="to_self", text="Попробую сам(а) по шагам"),
+        ResultButton(id="free_express", text="🎁 Экспресс-разбор БЕСПЛАТНО", url="https://t.me/{EXPERT_USERNAME}"),
+        ResultButton(id="paid_diagnostic", text="💎 Полная диагностика + сценарии — 6 900 ₽"),
     ]
 )
 

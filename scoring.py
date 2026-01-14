@@ -190,6 +190,13 @@ def get_result_buttons(
     buttons = []
     for btn in series.buttons:
         text = btn.text.replace("{ЭКСПЕРТ}", vars.expert_name)
-        buttons.append(InlineKeyboardButton(text=text, callback_data=btn.id))
+
+        if btn.url:
+            # URL-кнопка (внешняя ссылка)
+            url = btn.url.replace("{EXPERT_USERNAME}", vars.expert_username)
+            buttons.append(InlineKeyboardButton(text=text, url=url))
+        else:
+            # Callback-кнопка
+            buttons.append(InlineKeyboardButton(text=text, callback_data=btn.id))
 
     return buttons
