@@ -342,7 +342,7 @@ async def handle_question_2(callback: CallbackQuery, state: FSMContext):
                 callback_data="q3_x100"
             )],
             [InlineKeyboardButton(
-                text="🌱 Хочу наконец перестать выживать и нормально жить",
+                text="🌱 Хочу перестать выживать и жить нормально",
                 callback_data="q3_survive"
             )]
         ]
@@ -396,7 +396,7 @@ async def handle_question_3(callback: CallbackQuery, state: FSMContext):
     keyboard_perceived = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="📦 Слабое предложение / не понимаю, что продавать",
+                text="📦 Слабое предложение / что продавать?",
                 callback_data="perceived_product"
             )],
             [InlineKeyboardButton(
@@ -474,7 +474,7 @@ async def handle_perceived(callback: CallbackQuery, state: FSMContext):
                 callback_data="q4_medium"
             )],
             [InlineKeyboardButton(
-                text="😵 Нет, у меня миллион идей и форматов, хочу всё и сразу",
+                text="😵 Миллион идей, хочу всё и сразу",
                 callback_data="q4_chaos"
             )]
         ]
@@ -558,7 +558,7 @@ async def handle_question_4(callback: CallbackQuery, state: FSMContext):
                 callback_data="q5_unstable"
             )],
             [InlineKeyboardButton(
-                text="😞 Практически одни и те же лица везде, никого нового",
+                text="😞 Всё те же лица, новых нет",
                 callback_data="q5_stagnant"
             )]
         ]
@@ -629,15 +629,15 @@ async def handle_question_5(callback: CallbackQuery, state: FSMContext):
     keyboard_q6 = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="✅ Регулярно, с понятными темами и рубриками",
+                text="✅ Регулярно с темами и рубриками",
                 callback_data="q6_regular"
             )],
             [InlineKeyboardButton(
-                text="🎨 Пишу/выступаю когда есть вдохновение и силы, как попало",
+                text="🎨 Пишу по вдохновению, без системы",
                 callback_data="q6_irregular"
             )],
             [InlineKeyboardButton(
-                text="📚 Часто даю пользу, но почти не веду к продукту",
+                text="📚 Даю пользу, но не веду к продаже",
                 callback_data="q6_no_funnel"
             )]
         ]
@@ -712,7 +712,7 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
     keyboard_q7 = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="✅ Регулярно, мне ок с продажами. Не стесняюсь",
+                text="✅ Продаю регулярно, не стесняюсь",
                 callback_data="q7_regular"
             )],
             [InlineKeyboardButton(
@@ -720,7 +720,7 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
                 callback_data="q7_sometimes"
             )],
             [InlineKeyboardButton(
-                text="😳 Стыдно продавать, надеюсь, что сами догадаются и спросят",
+                text="😳 Стыдно, жду пока сами спросят",
                 callback_data="q7_ashamed"
             )]
         ]
@@ -796,11 +796,11 @@ async def handle_question_7(callback: CallbackQuery, state: FSMContext):
                 callback_data="q8_scale"
             )],
             [InlineKeyboardButton(
-                text="😰 Придётся напрячься, но, наверное, как-нибудь вытяну",
+                text="😰 Напрягусь, но как-нибудь справлюсь",
                 callback_data="q8_struggle"
             )],
             [InlineKeyboardButton(
-                text="🔥 Сгорю, запутаюсь и начну сливать. Испорчу отношения с половиной",
+                text="🔥 Выгорю, запутаюсь, всё испорчу",
                 callback_data="q8_burnout"
             )]
         ]
