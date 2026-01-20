@@ -1,8 +1,10 @@
+import os
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from .states import QuizStates
+from analytics import track_step, get_stats_text
 
 router = Router()
 
@@ -17,10 +19,19 @@ async def cmd_myid(message: Message):
     )
 
 
+@router.message(F.text == "/stats")
+async def cmd_stats(message: Message):
+    """Показать статистику (только для админа)"""
+    admin_id = int(os.getenv('ADMIN_CHAT_ID', '0'))
+    text = get_stats_text(admin_id, message.from_user.id)
+    await message.answer(text, parse_mode='HTML')
+
+
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     """Обработчик команды /start"""
-    
+    track_step('start')
+
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
@@ -48,7 +59,7 @@ async def cmd_start(message: Message):
 @router.callback_query(F.data == "start_quiz")
 async def start_quiz(callback: CallbackQuery, state: FSMContext):
     """Обработчик нажатия на кнопку 'Да'"""
-    
+    track_step('quiz_started')
     await callback.answer()
     
     text = (
@@ -254,7 +265,7 @@ async def process_custom_niche(message: Message, state: FSMContext):
 @router.callback_query(F.data.in_(["q1_better", "q1_same", "q1_worse"]))
 async def handle_question_1(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 1"""
-
+    track_step('q1_niche')
     await callback.answer()
 
     # Сохраняем ответ
@@ -310,7 +321,7 @@ async def handle_question_1(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q2_under50", "q2_50to100", "q2_100to300", "q2_over300"]))
 async def handle_question_2(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 2 - Доход"""
-
+    track_step('q2_point_a')
     await callback.answer()
 
     # Сохраняем ответ
@@ -367,7 +378,7 @@ async def handle_question_2(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q3_x2x3", "q3_x5x10", "q3_x100", "q3_survive"]))
 async def handle_question_3(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 3 - Цель по доходу на 2026"""
-
+    track_step('q3_goal')
     await callback.answer()
 
     # Сохраняем ответ
@@ -502,7 +513,7 @@ async def handle_perceived(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q4_clear", "q4_medium", "q4_chaos"]))
 async def handle_question_4(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 4 - Диагностика продукта"""
-
+    track_step('q4_perceived')
     await callback.answer()
 
     # Получаем текущие данные
@@ -581,7 +592,7 @@ async def handle_question_4(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q5_stable", "q5_unstable", "q5_stagnant"]))
 async def handle_question_5(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 5 - Диагностика трафика"""
-
+    track_step('q5_traffic')
     await callback.answer()
 
     # Получаем текущие данные
@@ -664,7 +675,7 @@ async def handle_question_5(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q6_regular", "q6_irregular", "q6_no_funnel"]))
 async def handle_question_6(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 6 - Диагностика контента/доверия"""
-
+    track_step('q6_content')
     await callback.answer()
 
     # Получаем текущие данные
@@ -744,7 +755,7 @@ async def handle_question_6(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q7_regular", "q7_sometimes", "q7_ashamed"]))
 async def handle_question_7(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 7 - Диагностика продаж"""
-
+    track_step('q7_sales')
     await callback.answer()
 
     # Получаем текущие данные
@@ -823,7 +834,7 @@ async def handle_question_7(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.in_(["q8_scale", "q8_struggle", "q8_burnout"]))
 async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     """Обработка ответа на вопрос 8 - Диагностика системы/ресурсов"""
-
+    track_step('q8_system')
     await callback.answer()
 
     # Получаем текущие данные
@@ -865,6 +876,7 @@ async def handle_question_8(callback: CallbackQuery, state: FSMContext):
     )
 
     # Все вопросы пройдены - переходим к результатам
+    track_step('results')
     await state.set_state(QuizStates.show_result)
 
     # Вычисляем финальный результат с помощью scoring модуля
@@ -1163,6 +1175,7 @@ async def handle_confirm_request(callback: CallbackQuery, state: FSMContext):
     )
 
     # Отправляем заявку администратору
+    track_step('lead_sent')
     admin_chat_id = os.getenv('ADMIN_CHAT_ID')
     if admin_chat_id:
         try:
