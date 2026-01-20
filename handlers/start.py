@@ -550,11 +550,11 @@ async def handle_question_4(callback: CallbackQuery, state: FSMContext):
     keyboard_q5 = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="✅ Новые люди стабильно приходят каждую неделю",
+                text="✅ Стабильно приходят каждую неделю",
                 callback_data="q5_stable"
             )],
             [InlineKeyboardButton(
-                text="🤷 Иногда прибавляется кто-то, иногда тишина",
+                text="🤷 Иногда прибавляются, иногда тишина",
                 callback_data="q5_unstable"
             )],
             [InlineKeyboardButton(
